@@ -250,7 +250,7 @@ os.makedirs(img_tmp_dir)
 
 start_date = datetime.datetime.strptime('2017-07-15', '%Y-%m-%d')
 end_date = datetime.datetime.strptime('2017-09-06', '%Y-%m-%d')
-delta_days = 20
+delta_days = 1
 date_cursor = start_date
 for r in routes:
     r["displayed"] = False
@@ -283,7 +283,7 @@ import imageio
 
 file_names = sorted((os.path.join(img_tmp_dir, fn) for fn in os.listdir(img_tmp_dir) if fn.endswith('.png')))
 
-with imageio.get_writer('final.gif', mode='I', duration=0.4) as writer:
+with imageio.get_writer('Accra_Ghana_Transit_data_creation.gif', mode='I', duration=0.4) as writer:
     for filename in file_names:
         image = imageio.imread(filename)
         writer.append_data(image)
