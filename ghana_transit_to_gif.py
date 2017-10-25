@@ -237,7 +237,7 @@ def show_date_on_image(image_path, date_to_display, nb_stops, nb_routes):
     img.close()
     img_croped.save(image_path)
 
-attributions = "cartodb | OSM"
+attributions = "cartodb | © OpenStreetMap"
 tiles = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png'
 m = folium.Map(location=[5.6204,-0.2125], zoom_start=12,
     max_zoom=12, min_zoom=12,
