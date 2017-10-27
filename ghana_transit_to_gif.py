@@ -168,7 +168,6 @@ for r in routes:
 print("Chargement de la carte")
 import folium
 from folium.plugins import MarkerCluster
-from IPython.display import Image
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
