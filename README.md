@@ -14,4 +14,4 @@ To use this tool, you need :
 * some python dependencies (see `requirements.txt`)
 
 ## How to run
-To run this tool, execute this command line `python3 ghana_transit_to_gif.py`.
+To run this tool, execute this command line `python3 transit_to_gif.py`.
