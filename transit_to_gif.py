@@ -2,18 +2,15 @@
 
 # Export des données Transport du Ghana
 
-#nécessite phantomjs (https://gist.github.com/julionc/7476620) et selenium (sudo pip3 install selenium)
-
 import os
 import requests
-
 import shutil
 import datetime
 import osmium
 import pandas as pd
 from shapely.geometry import LineString, MultiLineString
 from shapely.ops import cascaded_union
-import ghana_transit_to_gif_handlers
+import transit_to_gif_handlers
 
 
 url_source = 'http://download.geofabrik.de/africa/ghana.osh.pbf'
@@ -35,7 +32,7 @@ stops_file = './stops.csv'
 stops = []
 if not os.path.isfile(stops_file):
     print("Le fichier {} n'existe pas, lancement du traitement".format(stops_file))
-    stops_handler = ghana_transit_to_gif_handlers.StopsHandler()
+    stops_handler = transit_to_gif_handlers.StopsHandler()
     stops_handler.apply_file(dest_file)
 
     #on charge dans stops les données finales, avec la 1ère date de modification après le 1er juillet 2017
@@ -69,7 +66,7 @@ routes = []
 routes_all_ways = []
 if not os.path.isfile(routes_file1):
     print("Le fichier {} n'existe pas, lancement de la lecture des relations".format(routes_file1))
-    routes_handler = ghana_transit_to_gif_handlers.RelationHandler()
+    routes_handler = transit_to_gif_handlers.RelationHandler()
     routes_handler.apply_file(dest_file)
 
     for k,v in routes_handler.routes.items():
@@ -111,7 +108,7 @@ ways_all_nodes = []
 routes_all_ways = set(routes_all_ways) #utilisation d'un set pour sacrément accélerer la vérif de présence d'un item /!\
 if not os.path.isfile(ways_file):
     print("Le fichier {} n'existe pas, lancement de la lecture des ways".format(ways_file))
-    way_handler = ghana_transit_to_gif_handlers.WayHandler(routes_all_ways)
+    way_handler = transit_to_gif_handlers.WayHandler(routes_all_ways)
     way_handler.apply_file(dest_file)
     print("Ecriture du fichier {}".format(ways_file))
     ways = [w for w in way_handler.ways.values()]
@@ -133,7 +130,7 @@ print("nombre de refs de node : {:d}".format(len(ways_all_nodes)))
 #              Load Nodes
 #pas de sauvegarde fichier pour les nodes, le chargement est rapide
 ways_all_nodes = set(ways_all_nodes)
-routes_handler3 = ghana_transit_to_gif_handlers.NodeHandler(ways_all_nodes)
+routes_handler3 = transit_to_gif_handlers.NodeHandler(ways_all_nodes)
 routes_handler3.apply_file(dest_file)
 nodes = routes_handler3.nodes
 print("Chargement des nodes terminé : {:d}".format(len(nodes)))
@@ -168,7 +165,6 @@ for r in routes:
 print("Chargement de la carte")
 import folium
 from folium.plugins import MarkerCluster
-from IPython.display import Image
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
