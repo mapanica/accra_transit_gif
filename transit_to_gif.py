@@ -13,8 +13,8 @@ from shapely.ops import cascaded_union
 import transit_to_gif_handlers
 
 
-url_source = 'http://download.geofabrik.de/africa/ghana.osh.pbf'
-dest_file = './ghana.osh.pbf'
+url_source = 'http://download.geofabrik.de/central-america.osh.pbf' # TODO: changed!
+dest_file = './central-america.osh.pbf'
 
 if not os.path.isfile(dest_file):
     print("Downloading {}".format(dest_file))
@@ -174,9 +174,9 @@ def show_date_on_image(image_path, date_to_display, nb_stops, nb_routes):
     img = Image.open(image_path)
     draw = ImageDraw.Draw(img)
     # Affichage du titre
-    text_offset = [500, 40]
+    text_offset = [410, 40]
     text_border = 5
-    text_length = 460
+    text_length = 640
     text_size = 24
     font = ImageFont.truetype('Pillow/Tests/fonts/LiberationMono-Bold.ttf', text_size)
     draw.rectangle([
@@ -185,7 +185,7 @@ def show_date_on_image(image_path, date_to_display, nb_stops, nb_routes):
         text_offset[0] + text_border + text_length,
         text_offset[1] + text_border + text_size
         ], fill='#858687')
-    text_to_display = "OpenStreetMap bus routes in Accra"
+    text_to_display = "OpenStreetMap bus routes in Estelí, Nicaragua" #TODO: change text
     draw.text((text_offset[0], text_offset[1]), text_to_display,'#000000',font=font)
     # Affichage de la date
     text_offset = [img.size[0] - 400, img.size[1] - 50]
@@ -235,8 +235,8 @@ def show_date_on_image(image_path, date_to_display, nb_stops, nb_routes):
 
 attributions = "cartodb | © OpenStreetMap"
 tiles = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png'
-m = folium.Map(location=[5.6204,-0.2125], zoom_start=12,
-    max_zoom=12, min_zoom=12,
+m = folium.Map(location=[13.0893,-86.3599], zoom_start=14, # TODO: change location here!
+    max_zoom=14, min_zoom=14,
     attr=attributions, tiles=tiles, png_enabled=True)
 
 img_tmp_dir = './tmp_images'
@@ -244,9 +244,9 @@ if os.path.exists(img_tmp_dir):
     shutil.rmtree(img_tmp_dir)
 os.makedirs(img_tmp_dir)
 
-start_date = datetime.datetime.strptime('2017-07-15', '%Y-%m-%d')
-end_date = datetime.datetime.strptime('2017-09-06', '%Y-%m-%d')
-delta_days = 1
+start_date = datetime.datetime.strptime('2016-10-01', '%Y-%m-%d')
+end_date = datetime.datetime.strptime('2017-11-22', '%Y-%m-%d')
+delta_days = 10
 date_cursor = start_date
 for r in routes:
     r["displayed"] = False
@@ -257,14 +257,24 @@ nb_stops_displayed = 0
 while date_cursor <= end_date:
     for r in routes:
         if not r["displayed"] and r["creation_date"] < pd.to_datetime(date_cursor):
-            folium.PolyLine(r["geom_raw"], color="#1779c2", weight=1.5, opacity=1).add_to(m)
             r["displayed"] = True
-            nb_routes_displayed += 1
+            (lat1, lon1, lat2, lon2) = (0, 0, 0, 0)
+            if len(r["geom_raw"]) > 0 and len(r["geom_raw"][0]) > 0:
+                (lat1, lon1) = r["geom_raw"][0][0]
+                test = r["geom_raw"][len(r["geom_raw"])-1]
+                if len(test) > 0:
+                    (lat2, lon2) = test[len(test)-1]
+            
+            if float(lat1) > 13.0608 and float(lat1) < 13.1183 and float(lon1) > -86.3806 and float(lon1) < -86.3324 \
+            and float(lat2) > 13.0608 and float(lat2) < 13.1183 and float(lon2) > -86.3806 and float(lon2) < -86.3324:
+                folium.PolyLine(r["geom_raw"], color="#1779c2", weight=1.5, opacity=1).add_to(m)
+                nb_routes_displayed += 1
     for s in stops:
         if not s["displayed"] and s["creation_date"] < pd.to_datetime(date_cursor):
             s["displayed"] = True
-            folium.Circle([s["last_lat"], s["last_lon"]], radius=2.5, color="#1779c2", opacity=1).add_to(m)
-            nb_stops_displayed += 1
+            if float(s["last_lat"]) > 13.0608 and float(s["last_lat"]) < 13.1183 and float(s["last_lon"]) > -86.3806 and float(s["last_lon"]) < -86.3324: #TODO: same for routes
+                folium.Circle([s["last_lat"], s["last_lon"]], radius=2.5, color="#1779c2", opacity=1).add_to(m)
+                nb_stops_displayed += 1
     print("Enregistrement de la carte pour la date du {}".format(date_cursor.strftime('%Y-%m-%d')))
     image_path = os.path.join(img_tmp_dir, "image_{}.png".format(date_cursor.strftime('%Y-%m-%d')))
     with open(image_path, "wb")  as image_file:
@@ -279,7 +289,7 @@ import imageio
 
 file_names = sorted((os.path.join(img_tmp_dir, fn) for fn in os.listdir(img_tmp_dir) if fn.endswith('.png')))
 
-with imageio.get_writer('Accra_Ghana_Transit_data_creation.gif', mode='I', duration=0.4) as writer:
+with imageio.get_writer('result.gif', mode='I', duration=0.4) as writer: # TODO: change name!
     for filename in file_names:
         image = imageio.imread(filename)
         writer.append_data(image)
