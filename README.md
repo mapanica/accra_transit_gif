@@ -2,9 +2,9 @@
 
 This repository is a tool that downloads an OSM history file and generates a GIF animation of the evolution of the transit data mapping.
 
-It is a fork of [Jungle-Bus/accra_transit_gif](https://github.com/Jungle-Bus/accra_transit_gif) and adapted to the urban transport of Estelí, Nicaragua.
+It is a fork of [Jungle-Bus/accra_transit_gif](https://github.com/Jungle-Bus/accra_transit_gif) and adapted to the urban transport of Estelí and Managua, Nicaragua.
 
-![result in Estelí](result.gif)
+![result in Estelí](result-esteli.gif)
 
 ## Requirements
 

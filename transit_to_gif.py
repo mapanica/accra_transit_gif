@@ -12,18 +12,38 @@ from shapely.geometry import LineString, MultiLineString
 from shapely.ops import cascaded_union
 import transit_to_gif_handlers
 
+### ESTELI
+'''CONFIG_START_DATE = datetime.datetime.strptime('2016-10-01', '%Y-%m-%d')
+CONFIG_DELTA_DAYS = 10
+CONFIG_END_DATE   = datetime.datetime.strptime('2017-11-22', '%Y-%m-%d')
+CONFIG_BOUNDING   = {"top": 13.1183, "bottom": 13.0608, "left": -86.3806, "right": -86.3324} #TODO change right to top and other way round!!
+CONFIG_OSH_URL    = 'http://download.geofabrik.de/central-america.osh.pbf'
+CONFIG_OSH_FILE   = './central-america.osh.pbf'
+CONFIG_RESULT_GIF = './result-esteli.gif'
+CONFIG_LOCATION   = 'Estelí, Nicaragua'
+CONFIG_ZOOM       = 14'''
 
-url_source = 'http://download.geofabrik.de/central-america.osh.pbf' # TODO: changed!
-dest_file = './central-america.osh.pbf'
+### MANAGUA
+CONFIG_START_DATE = datetime.datetime.strptime('2012-01-01', '%Y-%m-%d')
+CONFIG_DELTA_DAYS = 60
+CONFIG_END_DATE   = datetime.datetime.strptime('2017-11-22', '%Y-%m-%d')
+CONFIG_BOUNDING   = {"top": 12.2048, "bottom": 12.0608, "left": -86.3865, "right": -86.1452}
+CONFIG_OSH_URL    = 'http://download.geofabrik.de/central-america.osh.pbf'
+CONFIG_OSH_FILE   = './central-america.osh.pbf'
+CONFIG_RESULT_GIF = './result-managua.gif'
+CONFIG_LOCATION   = 'Managua, Nicaragua'
+CONFIG_ZOOM       = 12
 
-if not os.path.isfile(dest_file):
-    print("Downloading {}".format(dest_file))
-    with open(dest_file, "wb") as file:
-        r = requests.get(url_source)
+
+
+if not os.path.isfile(CONFIG_OSH_FILE):
+    print("Downloading {}".format(CONFIG_OSH_FILE))
+    with open(CONFIG_OSH_FILE, "wb") as file:
+        r = requests.get(CONFIG_OSH_URL) # TODO: loading in memory
         file.write(r.content)
     print("Downloaded !")
 else:
-    print("File {} already exists".format(dest_file))
+    print("File {} already exists".format(CONFIG_OSH_FILE))
 
 
 #===============================================
@@ -32,8 +52,8 @@ stops_file = './stops.csv'
 stops = []
 if not os.path.isfile(stops_file):
     print("Le fichier {} n'existe pas, lancement du traitement".format(stops_file))
-    stops_handler = transit_to_gif_handlers.StopsHandler()
-    stops_handler.apply_file(dest_file)
+    stops_handler = transit_to_gif_handlers.StopsHandler(CONFIG_START_DATE)
+    stops_handler.apply_file(CONFIG_OSH_FILE)
 
     #on charge dans stops les données finales, avec la 1ère date de modification après le 1er juillet 2017
     #et le dernier nom et la dernière position connus
@@ -66,8 +86,8 @@ routes = []
 routes_all_ways = []
 if not os.path.isfile(routes_file1):
     print("Le fichier {} n'existe pas, lancement de la lecture des relations".format(routes_file1))
-    routes_handler = transit_to_gif_handlers.RelationHandler()
-    routes_handler.apply_file(dest_file)
+    routes_handler = transit_to_gif_handlers.RelationHandler(CONFIG_START_DATE)
+    routes_handler.apply_file(CONFIG_OSH_FILE)
 
     for k,v in routes_handler.routes.items():
         min_version = min(v["version"])
@@ -109,7 +129,7 @@ routes_all_ways = set(routes_all_ways) #utilisation d'un set pour sacrément acc
 if not os.path.isfile(ways_file):
     print("Le fichier {} n'existe pas, lancement de la lecture des ways".format(ways_file))
     way_handler = transit_to_gif_handlers.WayHandler(routes_all_ways)
-    way_handler.apply_file(dest_file)
+    way_handler.apply_file(CONFIG_OSH_FILE)
     print("Ecriture du fichier {}".format(ways_file))
     ways = [w for w in way_handler.ways.values()]
     pd.DataFrame.from_dict(ways).to_csv(ways_file)
@@ -131,7 +151,7 @@ print("nombre de refs de node : {:d}".format(len(ways_all_nodes)))
 #pas de sauvegarde fichier pour les nodes, le chargement est rapide
 ways_all_nodes = set(ways_all_nodes)
 routes_handler3 = transit_to_gif_handlers.NodeHandler(ways_all_nodes)
-routes_handler3.apply_file(dest_file)
+routes_handler3.apply_file(CONFIG_OSH_FILE)
 nodes = routes_handler3.nodes
 print("Chargement des nodes terminé : {:d}".format(len(nodes)))
 
@@ -158,7 +178,10 @@ for r in routes:
                 r_ways_geom.append(w["geom"])
                 break
     r["geom_raw"] = r_ways
-    r["geom"] = MultiLineString(r_ways_geom)
+    try:
+        r["geom"] = MultiLineString(r_ways_geom)
+    except:
+        print(r_ways_geom)
 
 
 #===============================================
@@ -173,7 +196,7 @@ def show_date_on_image(image_path, date_to_display, nb_stops, nb_routes):
     print("modification de l'image")
     img = Image.open(image_path)
     draw = ImageDraw.Draw(img)
-    # Affichage du titre
+    # Affichage du titre # TODO: compute this one!
     text_offset = [410, 40]
     text_border = 5
     text_length = 640
@@ -185,7 +208,7 @@ def show_date_on_image(image_path, date_to_display, nb_stops, nb_routes):
         text_offset[0] + text_border + text_length,
         text_offset[1] + text_border + text_size
         ], fill='#858687')
-    text_to_display = "OpenStreetMap bus routes in Estelí, Nicaragua" #TODO: change text
+    text_to_display = "OpenStreetMap bus routes in "+CONFIG_LOCATION
     draw.text((text_offset[0], text_offset[1]), text_to_display,'#000000',font=font)
     # Affichage de la date
     text_offset = [img.size[0] - 400, img.size[1] - 50]
@@ -235,8 +258,9 @@ def show_date_on_image(image_path, date_to_display, nb_stops, nb_routes):
 
 attributions = "cartodb | © OpenStreetMap"
 tiles = 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png'
-m = folium.Map(location=[13.0893,-86.3599], zoom_start=14, # TODO: change location here!
-    max_zoom=14, min_zoom=14,
+location = [(CONFIG_BOUNDING["top"]+CONFIG_BOUNDING["bottom"])/2, (CONFIG_BOUNDING["left"]+CONFIG_BOUNDING["right"])/2]
+m = folium.Map(location=location, zoom_start=CONFIG_ZOOM, # TODO: compute zoom level by bounding box
+    max_zoom=CONFIG_ZOOM, min_zoom=CONFIG_ZOOM,
     attr=attributions, tiles=tiles, png_enabled=True)
 
 img_tmp_dir = './tmp_images'
@@ -244,20 +268,18 @@ if os.path.exists(img_tmp_dir):
     shutil.rmtree(img_tmp_dir)
 os.makedirs(img_tmp_dir)
 
-start_date = datetime.datetime.strptime('2016-10-01', '%Y-%m-%d')
-end_date = datetime.datetime.strptime('2017-11-22', '%Y-%m-%d')
-delta_days = 10
-date_cursor = start_date
+date_cursor = CONFIG_START_DATE
 for r in routes:
     r["displayed"] = False
 for s in stops:
     s["displayed"] = False
 nb_routes_displayed = 0
 nb_stops_displayed = 0
-while date_cursor <= end_date:
+while date_cursor <= CONFIG_END_DATE:
     for r in routes:
         if not r["displayed"] and r["creation_date"] < pd.to_datetime(date_cursor):
             r["displayed"] = True
+            
             (lat1, lon1, lat2, lon2) = (0, 0, 0, 0)
             if len(r["geom_raw"]) > 0 and len(r["geom_raw"][0]) > 0:
                 (lat1, lon1) = r["geom_raw"][0][0]
@@ -265,14 +287,17 @@ while date_cursor <= end_date:
                 if len(test) > 0:
                     (lat2, lon2) = test[len(test)-1]
             
-            if float(lat1) > 13.0608 and float(lat1) < 13.1183 and float(lon1) > -86.3806 and float(lon1) < -86.3324 \
-            and float(lat2) > 13.0608 and float(lat2) < 13.1183 and float(lon2) > -86.3806 and float(lon2) < -86.3324:
+            if float(lat1) <= CONFIG_BOUNDING["top"] and float(lat1) >= CONFIG_BOUNDING["bottom"] \
+            and float(lon1) >= CONFIG_BOUNDING["left"] and float(lon1) <= CONFIG_BOUNDING["right"] \
+            and float(lat2) <= CONFIG_BOUNDING["top"] and float(lat2) >= CONFIG_BOUNDING["bottom"] \
+            and float(lon2) >= CONFIG_BOUNDING["left"] and float(lon2) <= CONFIG_BOUNDING["right"]:
                 folium.PolyLine(r["geom_raw"], color="#1779c2", weight=1.5, opacity=1).add_to(m)
                 nb_routes_displayed += 1
     for s in stops:
         if not s["displayed"] and s["creation_date"] < pd.to_datetime(date_cursor):
             s["displayed"] = True
-            if float(s["last_lat"]) > 13.0608 and float(s["last_lat"]) < 13.1183 and float(s["last_lon"]) > -86.3806 and float(s["last_lon"]) < -86.3324: #TODO: same for routes
+            if float(s["last_lat"]) <= CONFIG_BOUNDING["top"] and float(s["last_lat"]) >= CONFIG_BOUNDING["bottom"] \
+            and float(s["last_lon"]) >= CONFIG_BOUNDING["left"] and float(s["last_lon"]) <= CONFIG_BOUNDING["right"]:
                 folium.Circle([s["last_lat"], s["last_lon"]], radius=2.5, color="#1779c2", opacity=1).add_to(m)
                 nb_stops_displayed += 1
     print("Enregistrement de la carte pour la date du {}".format(date_cursor.strftime('%Y-%m-%d')))
@@ -281,7 +306,7 @@ while date_cursor <= end_date:
         m._png_image = None #on réinitialise le PNG
         image_file.write(m._to_png())
     show_date_on_image(image_path, date_cursor, nb_stops_displayed, nb_routes_displayed)
-    date_cursor = date_cursor + datetime.timedelta(days=delta_days)
+    date_cursor = date_cursor + datetime.timedelta(days=CONFIG_DELTA_DAYS)
 
 #===============================================
 print("Création du GIF")
@@ -289,7 +314,7 @@ import imageio
 
 file_names = sorted((os.path.join(img_tmp_dir, fn) for fn in os.listdir(img_tmp_dir) if fn.endswith('.png')))
 
-with imageio.get_writer('result.gif', mode='I', duration=0.4) as writer: # TODO: change name!
+with imageio.get_writer(CONFIG_RESULT_GIF, mode='I', duration=0.4) as writer: # TODO: change name!
     for filename in file_names:
         image = imageio.imread(filename)
         writer.append_data(image)

@@ -8,9 +8,9 @@ wkbfab = osmium.geom.WKBFactory()
 
 
 class StopsHandler(osmium.SimpleHandler):
-    def __init__(self):
+    def __init__(self, start_date):
         osmium.SimpleHandler.__init__(self)
-        self.start_date = datetime.datetime.strptime("01/10/2016", "%d/%m/%Y").replace(tzinfo=datetime.timezone.utc)
+        self.start_date = start_date.replace(tzinfo=datetime.timezone.utc)
         self.stops = {}
 
     def node(self, n):
@@ -49,9 +49,9 @@ class StopsHandler(osmium.SimpleHandler):
 
 
 class RelationHandler(osmium.SimpleHandler):
-    def __init__(self):
+    def __init__(self, start_date):
         osmium.SimpleHandler.__init__(self)
-        self.start_date = datetime.datetime.strptime("01/10/2016", "%d/%m/%Y").replace(tzinfo=datetime.timezone.utc)
+        self.start_date = start_date.replace(tzinfo=datetime.timezone.utc)
         self.routes = {}
 
     def relation(self, r):
